@@ -1,4 +1,6 @@
-[![Build Status](https://travis-ci.org/adriens/schemacrawler-csv-plugin.svg?branch=master)](https://travis-ci.org/adriens/schemacrawler-csv-plugin) [![Dependency Status](https://www.versioneye.com/user/projects/596fe9a16725bd005f47fe8b/badge.svg?style=flat-square)](https://www.versioneye.com/user/projects/596fe9a16725bd005f47fe8b)
+[![Build Status](https://travis-ci.org/adriens/schemacrawler-csv-plugin.svg?branch=master)](https://travis-ci.org/adriens/schemacrawler-csv-plugin) [![Dependency Status](https://www.versioneye.com/user/projects/596fe9a16725bd005f47fe8b/badge.svg?style=flat-square)](https://www.versioneye.com/user/projects/596fe9a16725bd005f47fe8b) [![](https://jitpack.io/v/adriens/schemacrawler-csv-plugin.svg)](https://jitpack.io/#adriens/schemacrawler-csv-plugin)
+
+
 
 # schemacrawler-csv-plugin
 
