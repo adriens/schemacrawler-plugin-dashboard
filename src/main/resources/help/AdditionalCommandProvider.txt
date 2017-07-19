@@ -1,0 +1,10 @@
+--- Command ---
+
+-command=csv
+  Runs the new plugin command
+  
+--- Output Options ---
+
+-filename=<outputCsvFilename>
+  Where <outputformat> is the output format. Defaults to <lints.csv>.
+
