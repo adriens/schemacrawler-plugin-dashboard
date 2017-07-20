@@ -12,7 +12,7 @@ public class AdditionalCommandProvider
 
   @Override
   public String getHelpAdditionalText(){
-      return "Export mints as a csv file.";
+      return "Export lints as a csv file.";
   }
   
   
