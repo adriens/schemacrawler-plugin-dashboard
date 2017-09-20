@@ -14,7 +14,7 @@
         <commons-csv.version>1.5</commons-csv.version>
         
         <maven-shade-plugin.version>3.0.0</maven-shade-plugin.version>
-        <maven-compiler-plugin.vesion>3.6.1</maven-compiler-plugin.vesion>
+        <maven-compiler-plugin.vesion>3.7.0</maven-compiler-plugin.vesion>
     </properties>
     
     
