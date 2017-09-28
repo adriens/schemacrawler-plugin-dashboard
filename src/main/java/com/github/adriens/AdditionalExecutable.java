@@ -1,5 +1,13 @@
 package com.github.adriens;
 
+import org.apache.commons.csv.CSVFormat;
+import org.apache.commons.csv.CSVPrinter;
+import schemacrawler.schema.Catalog;
+import schemacrawler.tools.executable.BaseStagedExecutable;
+import schemacrawler.tools.lint.*;
+import schemacrawler.tools.lint.executable.LintOptions;
+import schemacrawler.tools.lint.executable.LintOptionsBuilder;
+
 import java.io.File;
 import java.io.FileWriter;
 import java.sql.Connection;
@@ -7,17 +15,6 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.logging.Logger;
-import org.apache.commons.csv.CSVFormat;
-import org.apache.commons.csv.CSVPrinter;
-
-import schemacrawler.schema.Catalog;
-import schemacrawler.tools.executable.BaseStagedExecutable;
-import schemacrawler.tools.lint.LintUtility;
-import schemacrawler.tools.lint.Linter;
-import schemacrawler.tools.lint.LinterConfigs;
-import schemacrawler.tools.lint.Linters;
-import schemacrawler.tools.lint.executable.LintOptions;
-import schemacrawler.tools.lint.executable.LintOptionsBuilder;
 
 public class AdditionalExecutable
         extends BaseStagedExecutable {
@@ -29,7 +26,7 @@ public class AdditionalExecutable
 
     private String FileName;
     private static final String NEW_LINE_SEPARATOR = "\n";
-    private static final Object[] FILE_HEADER = {"linterId", "lintCount", "linterInstanceId", "severity", "summary", "description"};
+    private static final Object[] FILE_HEADER = {"linterId", "severity", "objectName", "message", "value"};
 
     protected AdditionalExecutable() {
         super(COMMAND);
@@ -44,16 +41,16 @@ public class AdditionalExecutable
         setFileName(additionalConfiguration.getStringValue("filename", "lints.csv"));
         File csvFile = new File(getFileName());
 
-
         CSVPrinter csvFilePrinter = null;
         FileWriter fileWriter = null;
         CSVFormat csvFileFormat = CSVFormat.DEFAULT.withRecordSeparator(NEW_LINE_SEPARATOR);
 
         final LinterConfigs linterConfigs = LintUtility.readLinterConfigs(lintOptions, getAdditionalConfiguration());
         final Linters linters = new Linters(linterConfigs);
-        Iterator<Linter> lintIter = linters.iterator();
+        final LintedCatalog lintedCatalog = new LintedCatalog(catalog, connection, linters);
+        Iterator<Lint<?>> lintIter = lintedCatalog.getCollector().iterator();
         // feed the csv
-        Linter aLint;
+        Lint aLint;
         fileWriter = new FileWriter(getFileName());
 
         //initialize CSVPrinter object
@@ -66,11 +63,10 @@ public class AdditionalExecutable
             aLint = lintIter.next();
             List lintDataRecord = new ArrayList();
             lintDataRecord.add(aLint.getLinterId());
-            lintDataRecord.add(String.valueOf(aLint.getLintCount()));
-            lintDataRecord.add(aLint.getLinterInstanceId());
             lintDataRecord.add(aLint.getSeverity().toString().toUpperCase());
-            lintDataRecord.add(aLint.getSummary());
-            lintDataRecord.add(aLint.getDescription());
+            lintDataRecord.add(aLint.getObjectName());
+            lintDataRecord.add(aLint.getMessage());
+            lintDataRecord.add(aLint.getValueAsString());
 
             csvFilePrinter.printRecord(lintDataRecord);
         }
