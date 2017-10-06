@@ -38,7 +38,7 @@ public class AdditionalExecutable
 
         final LintOptions lintOptions = new LintOptionsBuilder().fromConfig(additionalConfiguration).toOptions();
 
-        setFileName(additionalConfiguration.getStringValue("filename", "lints.csv"));
+        setFileName(additionalConfiguration.getStringValue("outputfile ", "lints.csv"));
         File csvFile = new File(getFileName());
 
         CSVPrinter csvFilePrinter = null;
