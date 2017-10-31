@@ -1,0 +1,136 @@
+---
+title: "Statistiques Bilan Energie"
+output: 
+  flexdashboard::flex_dashboard:
+    orientation: rows
+---
+
+```{r setup, include=FALSE}
+library(flexdashboard)
+library(ggplot2)
+library(plyr)
+library(reshape2)
+# library(treemap)
+# library(collapsibleTree)
+
+```
+
+Row {data-height=125}
+-----------------------------------------------------------------------
+
+### Score
+
+```{r}
+score <- read.csv("global_score.csv", header = TRUE)
+# gauge(score, min = 0, max = 5, gaugeSectors(
+#   success = c(0, 1), warning = c(2, 3), danger = c(4, 5)
+# ))
+
+valueBox( score,
+         icon = "fa-heartbeat",
+         color = ifelse(score > 4, "danger", ifelse(score > 3 , "warning", ifelse(score > 2 , "info", ifelse(score > 1, "primary", "success")))))
+```
+
+
+### Severity Hit
+
+```{r}
+
+score <- read.csv("severity_repartition.csv", header = TRUE, sep=",")
+
+if(score$CRITICAL > 0){
+  hit<- score$CRITICAL
+  severity <- "Critical Hits"
+  color<- "danger"
+  icone <- "fa-thumbs-o-down"
+} else if (score$HIGH > 0) {
+  hit<- score$HIGH
+  severity <- "High Hits"
+   color<- "warning"
+   icone <- "fa-thumbs-o-down"
+} else if (score$MEDIUM > 0) {
+  hit <- score$MEDIUM
+  severity <- "Medium Hits"
+   color<- "primary"
+   icone <- "fa-thumbs-o-down"
+} else if (score$LOW > 0) {
+  hit <- score$LOW
+  severity <- "Low Hits"
+   color<- "info"
+   icone <- "fa-thumbs-o-up"
+} else {
+   hit <- 0
+   severity <- "Hit"
+   color<- "success"
+   icone <- "fa-thumbs-o-up"
+}
+
+valueBox( paste(c(hit,severity), collapse=' '),
+         icon = icone,
+         color = color)
+```
+
+Row
+-----------------------------------------------------------------------
+
+### Top 10 worst tables
+
+```{r, echo=FALSE}
+datas <- read.csv("top10_worst_tables.csv", header = TRUE, sep=",")
+simple_data <- count(datas, vars=c("objectName","severity"))
+
+g <- ggplot(simple_data, aes(fill=severity, y=freq, x=objectName)) 
+g + geom_bar(stat="identity", width = 0.5) +
+  theme(axis.text.x = element_text(angle=65, vjust=0.6)) +
+  ylab("Hits") + xlab("") + guides(fill=guide_legend(title="Severity")) + 
+  scale_fill_manual("legend", values = c("CRITICAL" = "#FB4870", "HIGH" = "#FB9A58", "MEDIUM" = "#B383CB", "LOW" = "#63A2E7"))
+
+
+```
+
+### Severity repartition
+
+```{r, echo=FALSE}
+
+datas <- read.csv("severity_repartition.csv", header = TRUE, sep=",")
+columnNames <- colnames(datas)
+df <- datas[1,]
+names(df)<-NULL
+df <- unlist(c(df))
+
+newData <- data.frame(count=df, severity=columnNames)
+
+# Add addition columns, needed for drawing with geom_rect.
+newData$fraction = newData$count/sum(newData$count)
+newData = newData[order(newData$fraction), ]
+newData$ymax = cumsum(newData$fraction)
+newData$ymin = c(0, head(newData$ymax, n=-1))
+
+# Make the plot
+p1 = ggplot(newData, aes(fill=severity, ymax=ymax, ymin=ymin, xmax=4, xmin=3)) +
+     geom_rect() +
+     coord_polar(theta="y") +
+     xlim(c(0, 4)) +
+     theme(panel.grid=element_blank()) +
+     theme(axis.text=element_blank()) +
+     theme(axis.ticks=element_blank()) +
+     annotate("text", x = 0, y = 0, label = "") +
+     labs(title="", x="", y="") +
+     theme(panel.background  = element_blank()) + 
+     guides(fill=guide_legend(title="Severity")) + 
+     scale_fill_manual(values=c("#FB4870", "#FB9A58", "#B383CB", "#63A2E7"))
+p1
+```
+
+Row
+-----------------------------------------------------------------------
+
+### Lints tree
+
+```{r, echo=FALSE}
+
+datas <- read.csv("samples/lints.csv", header = TRUE, sep=",")
+grouped_data <- aggregate(datas, by=list(datas$linterId, datas$objectName, datas$severity), FUN=length);
+grouped_data
+
+```
