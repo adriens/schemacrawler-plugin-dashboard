@@ -3,6 +3,8 @@ title: "Statistiques Bilan Energie"
 output: 
   flexdashboard::flex_dashboard:
     orientation: rows
+    vertical_layout: scroll
+    smooth_scroll: true
 ---
 
 ```{r setup, include=FALSE}
@@ -10,9 +12,10 @@ library(flexdashboard)
 library(ggplot2)
 library(plyr)
 library(reshape2)
-# library(treemap)
-# library(collapsibleTree)
-
+library(treemapify)
+library(stringr)
+library(DT)
+palette <- c("CRITICAL" = "#FB4870", "HIGH" = "#FB9A58", "MEDIUM" = "#B383CB", "LOW" = "#63A2E7")
 ```
 
 Row {data-height=125}
@@ -70,22 +73,33 @@ valueBox( paste(c(hit,severity), collapse=' '),
          color = color)
 ```
 
+
+
 Row
 -----------------------------------------------------------------------
+
+<!-- ### 5 Critical -->
+
+<!-- ```{r, echo=FALSE} -->
+<!-- score <- read.csv("severity_repartition.csv", header = TRUE, sep=",") -->
+<!-- datatable(score, options = list(pageLength = 5)) -->
+<!-- ``` -->
+
 
 ### Top 10 worst tables
 
 ```{r, echo=FALSE}
 datas <- read.csv("top10_worst_tables.csv", header = TRUE, sep=",")
 simple_data <- count(datas, vars=c("objectName","severity"))
+simple_data$objectName <- gsub('bilan_adm.', '', simple_data$objectName)
 
-g <- ggplot(simple_data, aes(fill=severity, y=freq, x=objectName)) 
+g <- ggplot(simple_data, aes(fill=severity, y=freq, x=objectName))
 g + geom_bar(stat="identity", width = 0.5) +
   theme(axis.text.x = element_text(angle=65, vjust=0.6)) +
-  ylab("Hits") + xlab("") + guides(fill=guide_legend(title="Severity")) + 
-  scale_fill_manual("legend", values = c("CRITICAL" = "#FB4870", "HIGH" = "#FB9A58", "MEDIUM" = "#B383CB", "LOW" = "#63A2E7"))
-
-
+  ylab("Hits") + xlab("") + guides(fill=guide_legend(title="Severity")) +
+  scale_fill_manual("legend", values = palette)+
+  scale_y_sqrt()
+  # scale_y_continuous(trans='log2')
 ```
 
 ### Severity repartition
@@ -118,8 +132,8 @@ p1 = ggplot(newData, aes(fill=severity, ymax=ymax, ymin=ymin, xmax=4, xmin=3)) +
      labs(title="", x="", y="") +
      theme(panel.background  = element_blank()) + 
      guides(fill=guide_legend(title="Severity")) + 
-     scale_fill_manual(values=c("#FB4870", "#FB9A58", "#B383CB", "#63A2E7"))
-p1
+     # scale_fill_manual(values=c("#FB4870", "#FB9A58", "#B383CB", "#63A2E7")) +
+    scale_fill_manual("legend", values = palette)
 ```
 
 Row
@@ -129,8 +143,23 @@ Row
 
 ```{r, echo=FALSE}
 
-datas <- read.csv("samples/lints.csv", header = TRUE, sep=",")
-grouped_data <- aggregate(datas, by=list(datas$linterId, datas$objectName, datas$severity), FUN=length);
-grouped_data
+count_data <- read.csv("aggregated_lints.csv", header = TRUE, sep=",", stringsAsFactors=FALSE)
+score_data <- read.csv("tables_score.csv", header = TRUE, sep=",", stringsAsFactors=FALSE)
+
+
+merged_datas <- merge(x=count_data, y=score_data, by="table", all.x=TRUE)
+merged_datas$table <- gsub('bilan_adm.', '', merged_datas$table)
+merged_datas$linterId <- gsub('io.github.mbarre.schemacrawler.tool.linter.', '', merged_datas$linterId)
+merged_datas$linterId <- gsub('schemacrawler.tools.linter.', '', merged_datas$linterId)
+
+ggplot(merged_datas, aes(area = lint_count, fill = severity, label = linterId, subgroup = table)) +
+   geom_treemap()  +
+   geom_treemap_subgroup_border() +
+   geom_treemap_subgroup_text(place = "top", grow = TRUE, alpha = 0.5, colour =
+                              "black", fontface = "italic", min.size = 0) +
+  geom_treemap_text(fontface = "italic", colour = "white", place = "centre", grow = TRUE) + 
+  scale_fill_manual("legend", values = palette)
 
 ```
+
+

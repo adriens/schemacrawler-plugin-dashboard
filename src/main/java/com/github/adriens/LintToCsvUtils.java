@@ -1,7 +1,11 @@
 package com.github.adriens;
 
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+import tech.tablesaw.api.CategoryColumn;
 import tech.tablesaw.api.IntColumn;
 import tech.tablesaw.api.Table;
+import tech.tablesaw.columns.Column;
+import tech.tablesaw.mapping.StringMapUtils;
 import tech.tablesaw.reducing.CrossTab;
 import tech.tablesaw.reducing.NumericSummaryTable;
 import tech.tablesaw.reducing.functions.Count;
@@ -11,6 +15,7 @@ import static tech.tablesaw.api.QueryHelper.*;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 public class LintToCsvUtils {
@@ -68,12 +73,9 @@ public class LintToCsvUtils {
         }
 
         Table top10 = fullData.selectWhere(column("objectName").isIn(tables.toArray(new String[tables.size()])));
+//        CategoryColumn cat = ((StringMapUtils)top10.column("objectName")).replaceAll("bilan_adm.", "");
         top10.removeColumns("linterId");
         top10.write().csv("top10_worst_tables.csv");
-
-
-        System.out.println(top10);
-
 
     }
 
@@ -113,6 +115,8 @@ public class LintToCsvUtils {
                 .divide(score.intColumn("total")));
 
         score.column("CRITICAL * 5 + HIGH * 3 + MEDIUM * 2 + LOW * 1 / total").setName("SCORE");
+
+        fullData.write().csv("aggregated_lints.csv");
         score.retainColumns("SCORE");
         score.write().csv("global_score.csv");
 
@@ -145,8 +149,60 @@ public class LintToCsvUtils {
 
     }
 
+    public static void prepareDataForTreeMap(String csvFileName) throws IOException {
+
+        Table fullData = Table.read().csv(csvFileName);
+        fullData.removeColumns("message");
+
+        IntArrayList intList = new IntArrayList(new ArrayList<>(Collections.nCopies(fullData.rowCount(), 1)));
+        IntColumn intColumn = new IntColumn("count", intList);
+        Table countTable = fullData.fullCopy();
+        countTable.addColumn(intColumn);
+
+        countTable = countTable.sum("count").by("linterId", "objectName", "severity", "value");
+        countTable.column("Sum [count]").setName("lint_count");
+        countTable.column("objectName").setName("table");
+        countTable.write().csv("aggregated_lints.csv");
+
+        Table workTable = CrossTab.xCount(fullData, fullData.categoryColumn("objectName"), fullData.categoryColumn("severity"));
+
+        List<String> columns = workTable.columnNames();
+        int[] zeroArray = new int[workTable.rowCount()];
+        Arrays.fill(zeroArray, 0);
+        if(!columns.contains("CRITICAL"))
+            workTable.addColumn(new IntColumn("CRITICAL", zeroArray));
+        if(!columns.contains("HIGH"))
+            workTable.addColumn(new IntColumn("HIGH", zeroArray));
+        if(!columns.contains("MEDIUM"))
+            workTable.addColumn(new IntColumn("MEDIUM", zeroArray));
+        if(!columns.contains("LOW"))
+            workTable.addColumn(new IntColumn("LOW", zeroArray));
+
+        workTable.addColumn(workTable.intColumn("CRITICAL").multiply(CRITICAL_WEIGHT));
+        workTable.addColumn(workTable.intColumn("HIGH").multiply(HIGH_WEIGHT));
+        workTable.addColumn(workTable.intColumn("MEDIUM").multiply(MEDIUM_WEIGHT));
+        workTable.addColumn(workTable.intColumn("LOW").multiply(LOW_WEIGHT));
+        workTable.column("").setName("table");
+
+        workTable.addColumn(workTable.intColumn("CRITICAL * 5")
+                .add(workTable.intColumn("HIGH * 3"))
+                .add(workTable.intColumn("MEDIUM * 2"))
+                .add(workTable.intColumn("LOW * 1"))
+                .divide(workTable.intColumn("total")));
+
+        workTable.column("CRITICAL * 5 + HIGH * 3 + MEDIUM * 2 + LOW * 1 / total").setName("score");
+        workTable.retainColumns("table", "score");
+
+        Table score = workTable.selectWhere(column("table").isNotEqualTo("Total"));
+        score.write().csv("tables_score.csv");
+
+    }
+
     public static void main(String[] args) throws IOException {
+        generateTop10("samples/lints.csv");
+        generateGlobalScore("samples/lints.csv");
         severityRepartition("samples/lints.csv");
+        prepareDataForTreeMap("samples/lints.csv");
     }
 
 
