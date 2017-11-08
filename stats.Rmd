@@ -18,9 +18,11 @@ library(DT)
 palette <- c("CRITICAL" = "#FB4870", "HIGH" = "#FB9A58", "MEDIUM" = "#B383CB", "LOW" = "#63A2E7")
 ```
 
-Row {data-height=125}
------------------------------------------------------------------------
-
+Dashboard {data-navmenu="Dashboard"}
+=====================================
+    
+Row {data-height=120}
+------------------------------------- 
 ### Score
 
 ```{r}
@@ -28,6 +30,7 @@ score <- read.csv("global_score.csv", header = TRUE)
 # gauge(score, min = 0, max = 5, gaugeSectors(
 #   success = c(0, 1), warning = c(2, 3), danger = c(4, 5)
 # ))
+score <- round(score, digits = 0)
 
 valueBox( score,
          icon = "fa-heartbeat",
@@ -35,7 +38,7 @@ valueBox( score,
 ```
 
 
-### Severity Hit
+### Worst Severity Hit
 
 ```{r}
 
@@ -73,18 +76,56 @@ valueBox( paste(c(hit,severity), collapse=' '),
          color = color)
 ```
 
+### Biggest Severity Hits
 
+```{r}
+score <- read.csv("biggest_hits_severity.csv", header = TRUE, sep=",")
+if("CRITICAL" %in% colnames(score)){
+  hit<- score$CRITICAL
+  severity <- "Critical Hits"
+  color<- "danger"
+  icone <- "fa-frown-o"
+} else if("HIGH" %in% colnames(score)){
+  hit<- score$HIGH
+  severity <- "High Hits"
+   color<- "warning"
+   icone <- "fa-frown-o"
+} else if("MEDIUM" %in% colnames(score)){
+  hit <- score$MEDIUM
+  severity <- "Medium Hits"
+   color<- "primary"
+   icone <- "fa-meh-o"
+} else if("LOW" %in% colnames(score)){
+  hit <- score$LOW
+  severity <- "Low Hits"
+   color<- "info"
+   icone <- "fa-smile-o"
+}
+valueBox( paste(c(hit,severity), collapse=' '),
+         icon = icone,
+         color = color)
+```
 
-Row
+Row {data-height=600}
 -----------------------------------------------------------------------
 
-<!-- ### 5 Critical -->
 
-<!-- ```{r, echo=FALSE} -->
-<!-- score <- read.csv("severity_repartition.csv", header = TRUE, sep=",") -->
-<!-- datatable(score, options = list(pageLength = 5)) -->
-<!-- ``` -->
+### Worst Severity Hit Details
 
+```{r, echo=FALSE}
+
+datas <- read.csv("worst_severity_tables.csv", header = TRUE, sep=",")
+simple_data <- count(datas, vars=c("objectName","severity"))
+simple_data$objectName <- gsub('bilan_adm.', '', simple_data$objectName)
+
+g <- ggplot(simple_data, aes(fill=severity, y=freq, x=objectName))
+g + geom_bar(stat="identity", width = 0.5) +
+  theme(axis.text.x = element_text(angle=65, vjust=0.6)) +
+  ylab("Hits") + xlab("") + guides(fill=guide_legend(title="Severity")) +
+  scale_fill_manual("legend", values = palette)+
+  scale_y_sqrt()
+  # scale_y_continuous(trans='log2')
+```
 
 ### Top 10 worst tables
 
@@ -104,8 +145,7 @@ g + geom_bar(stat="identity", width = 0.5) +
 
 ### Severity repartition
 
-```{r, echo=FALSE}
-
+``` {r,echo=FALSE, fig.height = 3 }
 datas <- read.csv("severity_repartition.csv", header = TRUE, sep=",")
 columnNames <- colnames(datas)
 df <- datas[1,]
@@ -132,20 +172,108 @@ p1 = ggplot(newData, aes(fill=severity, ymax=ymax, ymin=ymin, xmax=4, xmin=3)) +
      labs(title="", x="", y="") +
      theme(panel.background  = element_blank()) + 
      guides(fill=guide_legend(title="Severity")) + 
-     # scale_fill_manual(values=c("#FB4870", "#FB9A58", "#B383CB", "#63A2E7")) +
     scale_fill_manual("legend", values = palette)
+p1
+
 ```
 
-Row
------------------------------------------------------------------------
 
+TreeMap {data-navmenu="Dashboard"}
+=====================================
+
+Row {data-height=120}
+------------------------------------- 
+### Score
+
+```{r}
+score <- read.csv("global_score.csv", header = TRUE)
+# gauge(score, min = 0, max = 5, gaugeSectors(
+#   success = c(0, 1), warning = c(2, 3), danger = c(4, 5)
+# ))
+score <- round(score, digits = 0)
+
+valueBox( score,
+         icon = "fa-heartbeat",
+         color = ifelse(score > 4, "danger", ifelse(score > 3 , "warning", ifelse(score > 2 , "info", ifelse(score > 1, "primary", "success")))))
+```
+
+
+### Worst Severity Hit
+
+```{r}
+
+score <- read.csv("severity_repartition.csv", header = TRUE, sep=",")
+
+if(score$CRITICAL > 0){
+  hit<- score$CRITICAL
+  severity <- "Critical Hits"
+  color<- "danger"
+  icone <- "fa-thumbs-o-down"
+} else if (score$HIGH > 0) {
+  hit<- score$HIGH
+  severity <- "High Hits"
+   color<- "warning"
+   icone <- "fa-thumbs-o-down"
+} else if (score$MEDIUM > 0) {
+  hit <- score$MEDIUM
+  severity <- "Medium Hits"
+   color<- "primary"
+   icone <- "fa-thumbs-o-down"
+} else if (score$LOW > 0) {
+  hit <- score$LOW
+  severity <- "Low Hits"
+   color<- "info"
+   icone <- "fa-thumbs-o-up"
+} else {
+   hit <- 0
+   severity <- "Hit"
+   color<- "success"
+   icone <- "fa-thumbs-o-up"
+}
+
+valueBox( paste(c(hit,severity), collapse=' '),
+         icon = icone,
+         color = color)
+```
+
+### Biggest Severity Hits
+
+```{r}
+score <- read.csv("biggest_hits_severity.csv", header = TRUE, sep=",")
+if("CRITICAL" %in% colnames(score)){
+  hit<- score$CRITICAL
+  severity <- "Critical Hits"
+  color<- "danger"
+  icone <- "fa-frown-o"
+} else if("HIGH" %in% colnames(score)){
+  hit<- score$HIGH
+  severity <- "High Hits"
+   color<- "warning"
+   icone <- "fa-frown-o"
+} else if("MEDIUM" %in% colnames(score)){
+  hit <- score$MEDIUM
+  severity <- "Medium Hits"
+   color<- "primary"
+   icone <- "fa-meh-o"
+} else if("LOW" %in% colnames(score)){
+  hit <- score$LOW
+  severity <- "Low Hits"
+   color<- "info"
+   icone <- "fa-smile-o"
+}
+valueBox( paste(c(hit,severity), collapse=' '),
+         icon = icone,
+         color = color)
+```
+
+Row {data-height=800}
+-----------------------------------------------------------------------
 ### Lints tree
 
 ```{r, echo=FALSE}
 
 count_data <- read.csv("aggregated_lints.csv", header = TRUE, sep=",", stringsAsFactors=FALSE)
 score_data <- read.csv("tables_score.csv", header = TRUE, sep=",", stringsAsFactors=FALSE)
-
 
 merged_datas <- merge(x=count_data, y=score_data, by="table", all.x=TRUE)
 merged_datas$table <- gsub('bilan_adm.', '', merged_datas$table)
@@ -163,3 +291,100 @@ ggplot(merged_datas, aes(area = lint_count, fill = severity, label = linterId, s
 ```
 
 
+Datas {data-navmenu="Dashboard"}
+=====================================
+
+Row {data-height=120}
+------------------------------------- 
+### Score
+
+```{r}
+score <- read.csv("global_score.csv", header = TRUE)
+# gauge(score, min = 0, max = 5, gaugeSectors(
+#   success = c(0, 1), warning = c(2, 3), danger = c(4, 5)
+# ))
+score <- round(score, digits = 0)
+
+valueBox( score,
+         icon = "fa-heartbeat",
+         color = ifelse(score > 4, "danger", ifelse(score > 3 , "warning", ifelse(score > 2 , "info", ifelse(score > 1, "primary", "success")))))
+```
+
+
+### Worst Severity Hit
+
+```{r}
+
+score <- read.csv("severity_repartition.csv", header = TRUE, sep=",")
+
+if(score$CRITICAL > 0){
+  hit<- score$CRITICAL
+  severity <- "Critical Hits"
+  color<- "danger"
+  icone <- "fa-thumbs-o-down"
+} else if (score$HIGH > 0) {
+  hit<- score$HIGH
+  severity <- "High Hits"
+   color<- "warning"
+   icone <- "fa-thumbs-o-down"
+} else if (score$MEDIUM > 0) {
+  hit <- score$MEDIUM
+  severity <- "Medium Hits"
+   color<- "primary"
+   icone <- "fa-thumbs-o-down"
+} else if (score$LOW > 0) {
+  hit <- score$LOW
+  severity <- "Low Hits"
+   color<- "info"
+   icone <- "fa-thumbs-o-up"
+} else {
+   hit <- 0
+   severity <- "Hit"
+   color<- "success"
+   icone <- "fa-thumbs-o-up"
+}
+
+valueBox( paste(c(hit,severity), collapse=' '),
+         icon = icone,
+         color = color)
+```
+
+### Biggest Severity Hits
+
+```{r}
+score <- read.csv("biggest_hits_severity.csv", header = TRUE, sep=",")
+if("CRITICAL" %in% colnames(score)){
+  hit<- score$CRITICAL
+  severity <- "Critical Hits"
+  color<- "danger"
+  icone <- "fa-frown-o"
+} else if("HIGH" %in% colnames(score)){
+  hit<- score$HIGH
+  severity <- "High Hits"
+   color<- "warning"
+   icone <- "fa-frown-o"
+} else if("MEDIUM" %in% colnames(score)){
+  hit <- score$MEDIUM
+  severity <- "Medium Hits"
+   color<- "primary"
+   icone <- "fa-meh-o"
+} else if("LOW" %in% colnames(score)){
+  hit <- score$LOW
+  severity <- "Low Hits"
+   color<- "info"
+   icone <- "fa-smile-o"
+}
+valueBox( paste(c(hit,severity), collapse=' '),
+         icon = icone,
+         color = color)
+```
+
+Row {data-height=800}
+-----------------------------------------------------------------------
+
+### Datas
+
+```{r}
+datas <- read.csv("summary.csv", header = TRUE, sep=",")
+datatable(datas, options = list(pageLength = 15))
+```

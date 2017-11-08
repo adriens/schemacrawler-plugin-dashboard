@@ -45,8 +45,6 @@ public class LintToCsvUtils {
         if(!columns.contains("LOW"))
             workTable.addColumn(new IntColumn("LOW", zeroArray));
 
-
-
         workTable.addColumn(workTable.intColumn("CRITICAL").multiply(CRITICAL_WEIGHT));
         workTable.addColumn(workTable.intColumn("HIGH").multiply(HIGH_WEIGHT));
         workTable.addColumn(workTable.intColumn("MEDIUM").multiply(MEDIUM_WEIGHT));
@@ -57,7 +55,23 @@ public class LintToCsvUtils {
                 .add(workTable.intColumn("LOW * 1"))
                 .divide(workTable.intColumn("total")));
 
+        Table biggestHitsSeverity = workTable.selectWhere(column("").isEqualTo("Total"));
+        biggestHitsSeverity.retainColumns("CRITICAL", "HIGH", "LOW", "MEDIUM");
+        Integer maxCount = 0;
+        String maxSeverity = "";
+        Integer value;
+        for (Column columnName : biggestHitsSeverity.columns()) {
+            value = Integer.valueOf(biggestHitsSeverity.column(columnName.name()).getString(0));
+            if(value.compareTo(maxCount) >= 0){
+                maxCount = value;
+                maxSeverity = columnName.name();
+            }
+        }
 
+
+
+        biggestHitsSeverity.retainColumns(maxSeverity);
+        biggestHitsSeverity.write().csv("biggest_hits_severity.csv");
 
         workTable.column("CRITICAL * 5 + HIGH * 3 + MEDIUM * 2 + LOW * 1 / total").setName("SCORE");
         workTable.column("").setName("TABLE");
@@ -159,7 +173,7 @@ public class LintToCsvUtils {
         Table countTable = fullData.fullCopy();
         countTable.addColumn(intColumn);
 
-        countTable = countTable.sum("count").by("linterId", "objectName", "severity", "value");
+        countTable = countTable.sum("count").by("linterId", "objectName", "severity");
         countTable.column("Sum [count]").setName("lint_count");
         countTable.column("objectName").setName("table");
         countTable.write().csv("aggregated_lints.csv");
@@ -198,11 +212,101 @@ public class LintToCsvUtils {
 
     }
 
+    public static void generateWorstSeverityDetail(String csvFileName) throws IOException {
+
+        Table fullData = Table.read().csv(csvFileName);
+
+        fullData.removeColumns("message", "value");
+
+        Table workTable = CrossTab.xCount(fullData, fullData.categoryColumn("objectName"), fullData.categoryColumn("severity"));
+
+        List<String> columns = workTable.columnNames();
+        int[] zeroArray = new int[workTable.rowCount()];
+        Arrays.fill(zeroArray, 0);
+        if(!columns.contains("CRITICAL"))
+            workTable.addColumn(new IntColumn("CRITICAL", zeroArray));
+        if(!columns.contains("HIGH"))
+            workTable.addColumn(new IntColumn("HIGH", zeroArray));
+        if(!columns.contains("MEDIUM"))
+            workTable.addColumn(new IntColumn("MEDIUM", zeroArray));
+        if(!columns.contains("LOW"))
+            workTable.addColumn(new IntColumn("LOW", zeroArray));
+
+        // Recuperation des tables ayant le niveau de severite la plus haute
+        Table summary = workTable.selectWhere(column("").isEqualTo("Total"));
+        Table worstSeverity = null;
+        if(Integer.valueOf(summary.column("CRITICAL").getString(0)) > 0){
+            worstSeverity = workTable.selectWhere(column("CRITICAL").isGreaterThan(0));
+        }else if (Integer.valueOf(summary.column("HIGH").getString(0)) > 0){
+            worstSeverity = workTable.selectWhere(column("HIGH").isGreaterThan(0));
+        }
+        else if (Integer.valueOf(summary.column("MEDIUM").getString(0)) > 0){
+            worstSeverity = workTable.selectWhere(column("MEDIUM").isGreaterThan(0));
+        }
+        else if (Integer.valueOf(summary.column("LOW").getString(0)) > 0){
+            worstSeverity = workTable.selectWhere(column("LOW").isGreaterThan(0));
+        }
+        List<String> tables = new ArrayList<>();
+        for (int i = 0; i < worstSeverity.rowCount(); i++){
+            tables.add(worstSeverity.column("").getString(i));
+        }
+        worstSeverity = fullData.selectWhere(column("objectName").isIn(tables.toArray(new String[tables.size()])));
+        worstSeverity.retainColumns("objectName", "severity");
+
+        if(worstSeverity!=null) {
+            worstSeverity.write().csv("worst_severity_tables.csv");
+        }
+
+        // Calcul de la severité ayant le plus de hit
+        Table biggestHitsSeverity = workTable.selectWhere(column("").isEqualTo("Total"));
+        biggestHitsSeverity.retainColumns("CRITICAL", "HIGH", "LOW", "MEDIUM");
+        Integer maxCount = 0;
+        String maxSeverity = "";
+        Integer value;
+        for (Column columnName : biggestHitsSeverity.columns()) {
+            value = Integer.valueOf(biggestHitsSeverity.column(columnName.name()).getString(0));
+            if(value.compareTo(maxCount) >= 0){
+                maxCount = value;
+                maxSeverity = columnName.name();
+            }
+        }
+
+        biggestHitsSeverity.retainColumns(maxSeverity);
+        biggestHitsSeverity.write().csv("biggest_hits_severity.csv");
+
+    }
+
+    public static void generateSummary(String csvFileName) throws IOException {
+
+        Table fullData = Table.read().csv(csvFileName);
+
+        fullData.removeColumns("message", "value");
+
+        Table workTable = CrossTab.xCount(fullData, fullData.categoryColumn("objectName"), fullData.categoryColumn("severity"));
+
+        List<String> columns = workTable.columnNames();
+        int[] zeroArray = new int[workTable.rowCount()];
+        Arrays.fill(zeroArray, 0);
+        if (!columns.contains("CRITICAL"))
+            workTable.addColumn(new IntColumn("CRITICAL", zeroArray));
+        if (!columns.contains("HIGH"))
+            workTable.addColumn(new IntColumn("HIGH", zeroArray));
+        if (!columns.contains("MEDIUM"))
+            workTable.addColumn(new IntColumn("MEDIUM", zeroArray));
+        if (!columns.contains("LOW"))
+            workTable.addColumn(new IntColumn("LOW", zeroArray));
+
+        workTable.column("").setName("TABLE");
+        workTable.write().csv("summary.csv");
+    }
+
     public static void main(String[] args) throws IOException {
         generateTop10("samples/lints.csv");
         generateGlobalScore("samples/lints.csv");
         severityRepartition("samples/lints.csv");
         prepareDataForTreeMap("samples/lints.csv");
+        generateWorstSeverityDetail("samples/lints.csv");
+        generateSummary("samples/lints.csv");
     }
 
 
