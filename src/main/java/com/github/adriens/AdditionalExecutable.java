@@ -22,7 +22,7 @@ public class AdditionalExecutable
     private static final Logger LOGGER = Logger
             .getLogger(AdditionalExecutable.class.getName());
 
-    static final String COMMAND = "csv";
+    static final String COMMAND = "dashboard";
 
     private String FileName;
     private static final String NEW_LINE_SEPARATOR = "\n";

@@ -295,8 +295,9 @@ public class LintToCsvUtils {
             workTable.addColumn(new IntColumn("MEDIUM", zeroArray));
         if (!columns.contains("LOW"))
             workTable.addColumn(new IntColumn("LOW", zeroArray));
-
         workTable.column("").setName("TABLE");
+        workTable.column("total").setName("TOTAL");
+
         workTable.write().csv("summary.csv");
     }
 

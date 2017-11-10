@@ -386,5 +386,7 @@ Row {data-height=800}
 
 ```{r}
 datas <- read.csv("summary.csv", header = TRUE, sep=",")
+datas$TABLE <- gsub('bilan_adm.', '', datas$TABLE)
+datas <- datas[,c("TABLE", "CRITICAL", "HIGH", "MEDIUM", "LOW", "TOTAL")]
 datatable(datas, options = list(pageLength = 15))
 ```
