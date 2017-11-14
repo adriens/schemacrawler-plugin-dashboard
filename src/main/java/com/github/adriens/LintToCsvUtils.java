@@ -1,16 +1,10 @@
 package com.github.adriens;
 
 import it.unimi.dsi.fastutil.ints.IntArrayList;
-import tech.tablesaw.api.CategoryColumn;
 import tech.tablesaw.api.IntColumn;
 import tech.tablesaw.api.Table;
 import tech.tablesaw.columns.Column;
-import tech.tablesaw.mapping.StringMapUtils;
 import tech.tablesaw.reducing.CrossTab;
-import tech.tablesaw.reducing.NumericSummaryTable;
-import tech.tablesaw.reducing.functions.Count;
-
-import static tech.tablesaw.api.QueryHelper.*;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -18,6 +12,11 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
+import static tech.tablesaw.api.QueryHelper.column;
+
+/**
+ * Utility class for data aggregation
+ */
 public class LintToCsvUtils {
 
     public static final int CRITICAL_WEIGHT = 5;
@@ -25,7 +24,14 @@ public class LintToCsvUtils {
     public static final int MEDIUM_WEIGHT = 2;
     public static final int LOW_WEIGHT = 1;
 
-    public static void generateTop10(String csvFileName) throws IOException {
+
+    /**
+     * Generate top 10 list of worst table
+     * @param csvFileName the source file (csv)
+     * @param destination the destination file (csv)
+     * @throws IOException
+     */
+    private static void generateTop10(String csvFileName, String destination) throws IOException {
 
         Table fullData = Table.read().csv(csvFileName);
 
@@ -71,7 +77,7 @@ public class LintToCsvUtils {
 
 
         biggestHitsSeverity.retainColumns(maxSeverity);
-        biggestHitsSeverity.write().csv("biggest_hits_severity.csv");
+        biggestHitsSeverity.write().csv(destination + "/" +"biggest_hits_severity.csv");
 
         workTable.column("CRITICAL * 5 + HIGH * 3 + MEDIUM * 2 + LOW * 1 / total").setName("SCORE");
         workTable.column("").setName("TABLE");
@@ -89,11 +95,17 @@ public class LintToCsvUtils {
         Table top10 = fullData.selectWhere(column("objectName").isIn(tables.toArray(new String[tables.size()])));
 //        CategoryColumn cat = ((StringMapUtils)top10.column("objectName")).replaceAll("bilan_adm.", "");
         top10.removeColumns("linterId");
-        top10.write().csv("top10_worst_tables.csv");
+        top10.write().csv(destination + "/" +"top10_worst_tables.csv");
 
     }
 
-    public static void generateGlobalScore(String csvFileName) throws IOException {
+    /**
+     * Generate database quality score from 0 (good) to 5 (bad)
+     * @param csvFileName the source file (csv)
+     * @param destination the destination file (csv)
+     * @throws IOException
+     */
+    private static void generateGlobalScore(String csvFileName, String destination) throws IOException {
 
         Table fullData = Table.read().csv(csvFileName);
 
@@ -130,14 +142,19 @@ public class LintToCsvUtils {
 
         score.column("CRITICAL * 5 + HIGH * 3 + MEDIUM * 2 + LOW * 1 / total").setName("SCORE");
 
-        fullData.write().csv("aggregated_lints.csv");
+        fullData.write().csv(destination + "/" +"aggregated_lints.csv");
         score.retainColumns("SCORE");
-        score.write().csv("global_score.csv");
+        score.write().csv(destination + "/" +"global_score.csv");
 
     }
 
-
-    public static void severityRepartition(String csvFileName) throws IOException {
+    /**
+     * Generate the number of hit by severity
+     * @param csvFileName the source file (csv)
+     * @param destination the destination file (csv)
+     * @throws IOException
+     */
+    private static void severityRepartition(String csvFileName, String destination) throws IOException {
 
         Table fullData = Table.read().csv(csvFileName);
 
@@ -159,11 +176,17 @@ public class LintToCsvUtils {
 
         Table repartition = workTable.selectWhere(column("").isEqualTo("Total"));
         repartition.removeColumns("", "total");
-        repartition.write().csv("severity_repartition.csv");
+        repartition.write().csv(destination + "/" +"severity_repartition.csv");
 
     }
 
-    public static void prepareDataForTreeMap(String csvFileName) throws IOException {
+    /**
+     * Generate the data for a treemap chart
+     * @param csvFileName the source file (csv)
+     * @param destination the destination file (csv)
+     * @throws IOException
+     */
+    private static void generateDataForTreeMap(String csvFileName, String destination) throws IOException {
 
         Table fullData = Table.read().csv(csvFileName);
         fullData.removeColumns("message");
@@ -176,7 +199,7 @@ public class LintToCsvUtils {
         countTable = countTable.sum("count").by("linterId", "objectName", "severity");
         countTable.column("Sum [count]").setName("lint_count");
         countTable.column("objectName").setName("table");
-        countTable.write().csv("aggregated_lints.csv");
+        countTable.write().csv(destination + "/" +"aggregated_lints.csv");
 
         Table workTable = CrossTab.xCount(fullData, fullData.categoryColumn("objectName"), fullData.categoryColumn("severity"));
 
@@ -208,11 +231,17 @@ public class LintToCsvUtils {
         workTable.retainColumns("table", "score");
 
         Table score = workTable.selectWhere(column("table").isNotEqualTo("Total"));
-        score.write().csv("tables_score.csv");
+        score.write().csv(destination + "/" +"tables_score.csv");
 
     }
 
-    public static void generateWorstSeverityDetail(String csvFileName) throws IOException {
+    /**
+     * Generate the list of tables having the worst severity in database
+     * @param csvFileName the source file (csv)
+     * @param destination the destination file (csv)
+     * @throws IOException
+     */
+    private static void generateWorstSeverityDetail(String csvFileName, String destination) throws IOException {
 
         Table fullData = Table.read().csv(csvFileName);
 
@@ -254,7 +283,7 @@ public class LintToCsvUtils {
         worstSeverity.retainColumns("objectName", "severity");
 
         if(worstSeverity!=null) {
-            worstSeverity.write().csv("worst_severity_tables.csv");
+            worstSeverity.write().csv(destination + "/" +"worst_severity_tables.csv");
         }
 
         // Calcul de la severité ayant le plus de hit
@@ -272,11 +301,17 @@ public class LintToCsvUtils {
         }
 
         biggestHitsSeverity.retainColumns(maxSeverity);
-        biggestHitsSeverity.write().csv("biggest_hits_severity.csv");
+        biggestHitsSeverity.write().csv(destination + "/" +"biggest_hits_severity.csv");
 
     }
 
-    public static void generateSummary(String csvFileName) throws IOException {
+    /**
+     * Generate lints summary count by table and by severity
+     * @param csvFileName the source file (csv)
+     * @param destination the destination file (csv)
+     * @throws IOException
+     */
+    private static void generateSummary(String csvFileName, String destination) throws IOException {
 
         Table fullData = Table.read().csv(csvFileName);
 
@@ -298,17 +333,22 @@ public class LintToCsvUtils {
         workTable.column("").setName("TABLE");
         workTable.column("total").setName("TOTAL");
 
-        workTable.write().csv("summary.csv");
+        workTable.write().csv(destination + "/" +"summary.csv");
     }
 
-    public static void main(String[] args) throws IOException {
-        generateTop10("samples/lints.csv");
-        generateGlobalScore("samples/lints.csv");
-        severityRepartition("samples/lints.csv");
-        prepareDataForTreeMap("samples/lints.csv");
-        generateWorstSeverityDetail("samples/lints.csv");
-        generateSummary("samples/lints.csv");
+    /**
+     * Generate all csv files
+     * @param folder source and destination folder
+     * @param source source file
+     * @throws IOException
+     */
+    public static void generateDashboardData(String folder, String source) throws IOException {
+        generateTop10(folder + source, folder);
+        generateGlobalScore(folder + source, folder);
+        severityRepartition(folder + source, folder);
+        generateDataForTreeMap(folder + source, folder);
+        generateWorstSeverityDetail(folder + source, folder);
+        generateSummary(folder + source, folder);
     }
-
 
 }

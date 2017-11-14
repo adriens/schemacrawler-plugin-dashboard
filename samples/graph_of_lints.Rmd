@@ -1,0 +1,107 @@
+---
+title: "Graph of lints"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Load datas
+
+```{r , fig.width=15,fig.height=15}
+library(stringr)
+
+linter_extractor <- function(lint_string){
+  strsplit(lint_string, "\\.")[[1]]
+lengths(strsplit(lint_string, "\\."))
+index <- lengths(strsplit(lint_string, "\\."))
+index
+out <- strsplit(lint_string, "\\.")[[1]][index]
+return(out)
+}
+
+lints <- read.csv("lints.csv", header=T, as.is=T)
+uniqueLintList <- unique(lints$linterId)
+
+
+head(lints)
+head(uniqueLintList)
+
+nrow(lints);
+length(unique(lints$linterId))
+
+uniqueTableList <- unique(lints$objectName)
+head(uniqueTableList)
+
+# now, prepare nodes
+# first Lint : lintId, "objectType"
+lintColumn <- rep("lint", length(uniqueLintList))
+lintsMatrix = cbind(uniqueLintList, rep("lint", length(uniqueLintList)))
+print(lintsMatrix)
+
+# now tables nodes
+tableColumn <- rep("table", length(uniqueTableList))
+tableMatrix <- cbind(uniqueTableList, rep("table", length(uniqueTableList)))
+
+#print(tableMatrix)
+
+# now append lints and tables nodes
+nodes <- rbind(lintsMatrix, tableMatrix)
+
+#####################
+# now prepare links between nodes
+edges <- cbind(lints$linterId, lints$objectName, lints$severity)
+
+aggreg <- data.frame(edges)
+
+aggreg["weight"] <-1
+weighted_edges <- aggregate(aggreg[c("weight")], by=list(lint=aggreg$X1, object=aggreg$X2), FUN=sum, na.rm=TRUE)
+filtered_weighted_edges <- subset(weighted_edges, weight > 10)
+
+
+library(igraph)
+net <- graph_from_data_frame(d=filtered_weighted_edges, vertices=nodes, directed=T) 
+
+V(net)[V(net)$V2 == "lint"]$shape <- "circle"
+V(net)[V(net)$V2 == "table"]$shape <- "square"
+
+
+plot(net,
+     edge.arrow.size=.4,
+     vertex.label.dist=3,
+     vertex.label=NA,
+     
+     layout=layout.fruchterman.reingold
+     )
+
+
+
+# now deal with the graph
+library(igraph)
+net <- graph_from_data_frame(d=edges, vertices=nodes, directed=T) 
+
+V(net)[V(net)$V2 == "lint"]$shape <- "circle"
+V(net)[V(net)$V2 == "table"]$shape <- "square"
+
+
+plot(net,
+     edge.arrow.size=.4,
+     vertex.label.dist=3,
+     vertex.label=NA,
+     layout=layout.fruchterman.reingold
+     )
+
+
+plot(net,
+     edge.arrow.size=.4,
+     vertex.label.dist=3,
+     ##vertex.label=NA,
+     layout=layout_in_circle
+     )
+
+#library("networkD3")
+#networkData <- cbind(lints$linterId, lints$objectName)
+#simpleNetwork(as.data.frame(networkData))
+
+```
