@@ -321,7 +321,7 @@ if(score$CRITICAL > 0){
   hit<- score$CRITICAL
   severity <- "Critical Hits"
   color<- "danger"
-  icone <- "fa-thumbs-o-down
+  icone <- "fa-thumbs-o-down"
 } else if (score$HIGH > 0) {
   hit<- score$HIGH
   severity <- "High Hits"
