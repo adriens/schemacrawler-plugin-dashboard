@@ -13,7 +13,7 @@ public class TestCommandPlugin
     throws Exception
   {
     final CommandRegistry registry = new CommandRegistry();
-    assertTrue(registry.hasCommand("csv"));
+    assertTrue(registry.hasCommand("dashboard"));
   }
 
 }
