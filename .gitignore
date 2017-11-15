@@ -3,3 +3,5 @@ schemacrawler-csv.iml
 target
 .idea
 dependency-reduced-pom.xml
+.Rhistory
+stats.html
