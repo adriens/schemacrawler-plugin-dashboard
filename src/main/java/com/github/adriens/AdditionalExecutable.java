@@ -56,6 +56,9 @@ public class AdditionalExecutable
         FileWriter fileWriter;
         CSVFormat csvFileFormat = CSVFormat.DEFAULT.withRecordSeparator(NEW_LINE_SEPARATOR);
 
+        File outputFolderFile = new File(getOutputFolder());
+        outputFolderFile.mkdir();
+
         LOGGER.log(Level.CONFIG, "Performing lint analyze");
         final LinterConfigs linterConfigs = LintUtility.readLinterConfigs(lintOptions, getAdditionalConfiguration());
         final Linters linters = new Linters(linterConfigs);
@@ -126,7 +129,7 @@ public class AdditionalExecutable
         } catch (InterruptedException e) {
             LOGGER.log(Level.SEVERE, "System not supported, please execute manually R script in " + outputFolder + " folder.");
         }
-
+        LOGGER.log(Level.SEVERE, ""+exitCode);
         return exitCode;
     }
 
