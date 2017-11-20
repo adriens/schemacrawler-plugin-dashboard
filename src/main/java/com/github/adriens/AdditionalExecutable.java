@@ -24,6 +24,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import schemacrawler.schemacrawler.DatabaseSpecificOverrideOptions;
 
 public class AdditionalExecutable
         extends BaseStagedExecutable {
@@ -45,7 +46,7 @@ public class AdditionalExecutable
     }
 
     @Override
-    public void executeOn(final Catalog catalog, final Connection connection)
+    public void executeOn(final Catalog catalog, final Connection connection, DatabaseSpecificOverrideOptions databaseSpecificOverrideOptions)
             throws Exception {
 
         LOGGER.log(Level.CONFIG, "Start executing dashboard command");
