@@ -1,6 +1,4 @@
-[![Build Status](https://travis-ci.org/adriens/schemacrawler-plugin-dashboard.svg?branch=master)](https://travis-ci.org/adriens/schemacrawler-plugin-dashboard)
-
-[![Dependency Status](https://beta.gemnasium.com/badges/github.com/adriens/schemacrawler-plugin-dashboard.svg)](https://beta.gemnasium.com/projects/github.com/adriens/schemacrawler-plugin-dashboard) [![](https://jitpack.io/v/adriens/schemacrawler-plugin-dashboard.svg)](https://jitpack.io/#adriens/schemacrawler-plugin-dashboard)
+[![Build Status](https://travis-ci.org/adriens/schemacrawler-plugin-dashboard.svg?branch=master)](https://travis-ci.org/adriens/schemacrawler-plugin-dashboard) [![Dependency Status](https://beta.gemnasium.com/badges/github.com/adriens/schemacrawler-plugin-dashboard.svg)](https://beta.gemnasium.com/projects/github.com/adriens/schemacrawler-plugin-dashboard) [![](https://jitpack.io/v/adriens/schemacrawler-plugin-dashboard.svg)](https://jitpack.io/#adriens/schemacrawler-plugin-dashboard)
 
 
 # schemacrawler-plugin-dashboard 
