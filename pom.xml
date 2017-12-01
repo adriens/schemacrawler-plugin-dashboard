@@ -12,7 +12,7 @@
         <junit.version>4.12</junit.version>
         <hsqldb.version>2.4.0</hsqldb.version>
         <commons-csv.version>1.5</commons-csv.version>
-        <tablesaw-core.version>0.10.0</tablesaw-core.version>
+        <tablesaw-core.version>0.11.0</tablesaw-core.version>
         <commons-io.version>2.6</commons-io.version>
         <commons-exec.version>1.3</commons-exec.version>
         <maven-shade-plugin.version>3.1.0</maven-shade-plugin.version>
