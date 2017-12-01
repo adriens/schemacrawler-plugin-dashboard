@@ -46,7 +46,7 @@ public class AdditionalExecutable
     }
 
     @Override
-    public void executeOn(final Catalog catalog, final Connection connection, DatabaseSpecificOverrideOptions databaseSpecificOverrideOptions)
+    public void executeOn(final Catalog catalog, final Connection connection)
             throws Exception {
 
         LOGGER.log(Level.CONFIG, "Start executing dashboard command");
