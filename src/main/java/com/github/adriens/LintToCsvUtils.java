@@ -4,13 +4,13 @@ import it.unimi.dsi.fastutil.ints.IntArrayList;
 import tech.tablesaw.api.IntColumn;
 import tech.tablesaw.api.Table;
 import tech.tablesaw.columns.Column;
-import tech.tablesaw.reducing.CrossTab;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import tech.tablesaw.aggregate.CrossTab;
 
 import static tech.tablesaw.api.QueryHelper.column;
 
@@ -84,7 +84,7 @@ public class LintToCsvUtils {
 
         workTable.retainColumns("SCORE", "TABLE", "total");
         Table sortedScore = workTable.sortDescendingOn("SCORE");
-        sortedScore = sortedScore.dropRows(0);
+        sortedScore = sortedScore.dropRows(0,0);
         sortedScore = sortedScore.first(10);
 
         List<String> tables = new ArrayList<>();
